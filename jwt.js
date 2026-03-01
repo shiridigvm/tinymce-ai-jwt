@@ -42,9 +42,6 @@ const rawKey = process.env.TINYMCE_PRIVATE_KEY;
 const privateKey = rawKey ? rawKey.replace(/\\n/g, '\n') : DEFAULT_PRIVATE_KEY;
 const apiKey = process.env.TINYMCE_API_KEY || '451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu';
 
-console.log('Using TINYMCE_PRIVATE_KEY from env:', !!rawKey);
-console.log('Using TINYMCE_API_KEY from env:', !!process.env.TINYMCE_API_KEY);
-console.log('Private key starts with:', privateKey.trim().substring(0, 30));
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -73,8 +70,8 @@ app.post('/jwt', (req, res) => {
         const token = jwt.sign(payload, privateKey, { algorithm: 'RS256' });
         res.json({ token });
     } catch (error) {
-        res.status(500).json({ error: 'Failed to generate JWT token.', details: error.message });
-        console.error('JWT signing error:', error.message);
+        res.status(500).json({ error: 'Failed to generate JWT token.' });
+        console.error(error.message);
     }
 });
 
