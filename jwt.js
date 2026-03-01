@@ -38,7 +38,8 @@ kuzO4gEFj3Fg+uxJ0xEbGbR3Fl+Xrux5mAEeaKZJ7ILU4Qb2vvuQBVbLOQF+2EAr
 -----END PRIVATE KEY-----
 `;
 
-const privateKey = process.env.TINYMCE_PRIVATE_KEY || DEFAULT_PRIVATE_KEY;
+const rawKey = process.env.TINYMCE_PRIVATE_KEY;
+const privateKey = rawKey ? rawKey.replace(/\\n/g, '\n') : DEFAULT_PRIVATE_KEY;
 const apiKey = process.env.TINYMCE_API_KEY || '451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu';
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -68,7 +69,7 @@ app.post('/jwt', (req, res) => {
         const token = jwt.sign(payload, privateKey, { algorithm: 'RS256' });
         res.json({ token });
     } catch (error) {
-        res.status(500).send('Failed to generate JWT token.');
+        res.status(500).json({ error: 'Failed to generate JWT token.' });
         console.error(error.message);
     }
 });
