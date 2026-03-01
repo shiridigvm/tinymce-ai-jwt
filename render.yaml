@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: tinymce-ai-jwt
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: TINYMCE_PRIVATE_KEY
+        sync: false
+      - key: TINYMCE_API_KEY
+        sync: false
