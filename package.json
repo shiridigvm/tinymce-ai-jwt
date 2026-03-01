@@ -1,7 +1,7 @@
 {
   "name": "tinymce-ai-jwt",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "jwt.js",
   "scripts": {
     "start": "node jwt.js",
     "test": "echo \"Error: no test specified\" && exit 1"
