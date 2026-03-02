@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>TinyMCE with TinyMCE AI</title>
+  <script src="https://cdn.staging.tiny.cloud/1/451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu/tinymce/8-dev/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+
+  <script>
+    tinymce.init({
+      selector: 'textarea',
+      plugins: 'tinymceai',
+      toolbar: 'aichat aiquickactions aireview',
+
+      // 8-dev plugin expects an Object with a token property, not a raw string.
+      tinymceai_token_provider: () => {
+        return fetch('/jwt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }).then(r => r.json());
+      },
+
+      // Unique ID for this document so chat history is preserved across sessions.
+      tinymceai_document_id: 'demo-doc-1',
+
+      // Sidebar: 'static' (default) or 'floating'.
+      tinymceai_sidebar_type: 'static',
+
+      // 8-dev: point at TinyMCE AI API (staging: tinymceai.api.staging.tiny.cloud).
+      tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/'
+    });
+  </script>
+</head>
+<body>
+  <h1>TinyMCE AI Demo</h1>
+  <textarea>
+    Welcome to TinyMCE! Try the AI features like chat, quick actions, and review.
+  </textarea>
+</body>
+</html>

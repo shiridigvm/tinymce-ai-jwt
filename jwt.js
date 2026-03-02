@@ -49,7 +49,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/jwt', (req, res) => {
     const payload = {
         aud: apiKey, // TinyMCE API key (from env var or default)
-        sub: 'qa-user', // Replace with actual user identifier
+        sub: 'tinyqateam', // Replace with actual user identifier
         iat: Math.floor(Date.now() / 1000), // Issue timestamp
         exp: Math.floor(Date.now() / 1000) + (60 * 60), // Expiration time (60 minutes)
         auth: {
@@ -57,6 +57,7 @@ app.post('/jwt', (req, res) => {
                 permissions: [
                     'ai:conversations:read',
                     'ai:conversations:write',
+                    'ai:conversations:context:*',
                     'ai:models:agent',
                     'ai:actions:system:*',
                     'ai:reviews:system:*'
