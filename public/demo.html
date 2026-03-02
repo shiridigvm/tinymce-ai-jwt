@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TinyMCE AI — Live Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script
+    src="https://cdn.staging.tiny.cloud/1/451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu/tinymce/8-dev/tinymce.min.js"
+    referrerpolicy="origin" crossorigin="anonymous"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      min-height: 100vh;
+      color: #e2e8f0;
+    }
+
+    /* Animated background particles */
+    .bg-glow {
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.06) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 80%, rgba(14, 165, 233, 0.05) 0%, transparent 50%);
+      animation: glowMove 20s ease-in-out infinite alternate;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    @keyframes glowMove {
+      0%   { transform: translate(0, 0); }
+      100% { transform: translate(-5%, -3%); }
+    }
+
+    .page-wrapper {
+      position: relative;
+      z-index: 1;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 40px 24px 60px;
+    }
+
+    /* Header */
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 6px 16px;
+      border-radius: 100px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -1px;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 span {
+      background: linear-gradient(135deg, #818cf8 0%, #6366f1 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #94a3b8;
+      max-width: 640px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+
+    /* Feature pills */
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 48px;
+    }
+
+    .feature-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a2538;
+      border: 1px solid rgba(51, 65, 85, 0.6);
+      padding: 10px 20px;
+      border-radius: 100px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #cbd5e1;
+      transition: all 0.25s ease;
+    }
+
+    .feature-pill:hover {
+      border-color: rgba(99, 102, 241, 0.5);
+      background: rgba(99, 102, 241, 0.08);
+      color: #e0e7ff;
+      transform: translateY(-1px);
+    }
+
+    .feature-pill .icon {
+      font-size: 18px;
+    }
+
+    /* Editor container */
+    .editor-container {
+      background: #0d1424;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      border-radius: 16px;
+      padding: 3px;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.05),
+                  0 25px 50px -12px rgba(0, 0, 0, 0.4),
+                  0 0 80px -20px rgba(99, 102, 241, 0.1);
+    }
+
+    /* Allow TinyMCE fullscreen to break out of container */
+    body.tox-fullscreen .editor-container {
+      position: static;
+    }
+
+    /* How-to section */
+    .how-to {
+      margin-top: 56px;
+      text-align: center;
+    }
+
+    .how-to h2 {
+      font-size: 28px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 12px;
+    }
+
+    .how-to p.subtitle {
+      color: #94a3b8;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      text-align: left;
+    }
+
+    .step-card {
+      background: #1a2437;
+      border: 1px solid rgba(51, 65, 85, 0.5);
+      border-radius: 14px;
+      padding: 28px;
+      transition: all 0.3s ease;
+    }
+
+    .step-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px -8px rgba(99, 102, 241, 0.12);
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 16px;
+    }
+
+    .step-card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 8px;
+    }
+
+    .step-card p {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .step-card code {
+      background: rgba(99, 102, 241, 0.1);
+      color: #a5b4fc;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 56px;
+      text-align: center;
+      padding: 24px 0;
+      border-top: 1px solid rgba(51, 65, 85, 0.4);
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .footer a {
+      color: #818cf8;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 32px; }
+      .hero p { font-size: 16px; }
+      .page-wrapper { padding: 24px 16px 40px; }
+    }
+  </style>
+
+  <script type="text/javascript">
+    const API_URL = 'https://demouserdirectory.tiny.cloud/v1/users';
+
+    const mentions_fetch = async (query, success) => {
+      try {
+        const searchPhrase = query.term.toLowerCase();
+        const users = (await (await fetch(`${API_URL}?q=${encodeURIComponent(searchPhrase)}`)).json());
+        success(users.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const mentions_menu_complete = (editor, userInfo) => {
+      const span = editor.getDoc().createElement('span');
+      span.className = 'mymention';
+      span.setAttribute('data-mention-id', userInfo.id);
+      span.appendChild(editor.getDoc().createTextNode('@' + userInfo.name));
+      return span;
+    };
+
+    const mentions_select = async (mention, success) => {
+      const id = mention.getAttribute('data-mention-id');
+      try {
+        const employee = await (await fetch(`${API_URL}/${id}`)).json();
+        const div = document.createElement('div');
+        div.innerHTML = (
+          '<div class="card">' +
+          '<img class="avatar" src="' + employee.image + '">' +
+          '<h1>' + employee.name + '</h1>' +
+          '<p>' + employee.description + '</p>' +
+          '</div>'
+        );
+        success(div);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const mentions_menu_hover = async (userInfo, success) => {
+      const div = document.createElement('div');
+      div.innerHTML = (
+        '<div class="card">' +
+        '<img class="avatar" src="' + userInfo.image + '">' +
+        '<h1>' + userInfo.name + '</h1>' +
+        '<p>' + userInfo.description + '</p>' +
+        '</div>'
+      );
+      success(div);
+    };
+
+    async function init() {
+      const commentsAuthorId = 'james-wilson';
+      const commentsAuthor = await (await fetch(`${API_URL}/${commentsAuthorId}`)).json();
+
+      tinymce.init({
+        selector: "textarea#demo-editor",
+        plugins: [
+          "accordion", "advtable", "anchor", "advlist", "autolink", "autosave", "advcode", "charmap", "codesample", "directionality", "emoticons", "fullscreen", "quickbars",
+          "help", "image", "insertdatetime", "importcss", "link", "lists", "media", "nonbreaking", "pagebreak", "preview", "save", "searchreplace", "table",
+          "visualblocks", "visualchars", "wordcount", "autocorrect", "casechange", "checklist", "powerpaste", "a11ychecker", "tinymcespellchecker",
+          "tableofcontents", "editimage", "mentions", "mediaembed", "mergetags", "permanentpen", "formatpainter", "footnotes", "pageembed", "linkchecker", "tinycomments", "typography", "inlinecss", "advtemplate", "exportpdf", "exportword", "importword", "revisionhistory", "markdown", "math", "fullpagehtml", "suggestededits", "tinymceai"
+        ],
+        toolbar: "aichat aiquickactions aireview | bold italic underline strikethrough | fontfamily fontsize | blocks | forecolor backcolor | align | numlist bullist checklist | link image media table | exportpdf exportword importword | formatpainter removeformat | fullscreen preview code help",
+        menubar: 'file edit insert view format table tools help',
+        menu: {
+          file: { title: 'File', items: 'newdocument restoredraft | importword exportpdf exportword | print deleteallconversations' },
+          edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext selectall | searchreplace' },
+          insert: { title: 'Insert', items: 'image link media | accordion codesample charmap math hr | mergetags footnotes | tableofcontents' },
+          view: { title: 'View', items: 'code revisionhistory preview | visualchars visualblocks | fullscreen' },
+          format: { title: 'Format', items: 'bold italic underline strikethrough | casechange | formatpainter removeformat' },
+          tools: { title: 'Tools', items: 'typography a11ycheck spellchecker wordcount' },
+          help: { title: 'Help', items: 'help' },
+        },
+        quickbars_selection_toolbar: 'aiquickactions | bold italic | blocks | quicklink blockquote',
+
+        // AI Configuration
+        tinymceai_token_provider: () => {
+          return fetch('/jwt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }).then(r => r.json());
+        },
+
+        tinymceai_document_id: 'demo-doc-stakeholder',
+        tinymceai_sidebar_type: 'static',
+        tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/',
+        tinymceai_context_toolbar: ['aichat', 'aiquickactions', 'aireview'],
+        tinymceai_default_model: 'gpt-4o',
+        tinymceai_allow_model_selection: true,
+        tinymceai_allowed_models: ['gpt-4o', 'gpt-4o-mini', 'claude-3-5-sonnet'],
+
+        tinymceai_quickactions_menu: [
+          'tinymceai-chat-commands',
+          'tinymceai-improve-writing',
+          'tinymceai-fix-grammar',
+          'tinymceai-adjust-length',
+          'tinymceai-change-tone',
+          'tinymceai-translate',
+          'tinymceai-custom-commands'
+        ],
+        tinymceai_chat_commands_menu: [
+          'tinymceai-explain',
+          'tinymceai-summarize',
+          'tinymceai-highlight-key-points'
+        ],
+        tinymceai_adjust_length_menu: [
+          'tinymceai-make-shorter',
+          'tinymceai-make-longer'
+        ],
+        tinymceai_change_tone_menu: [
+          'tinymceai-make-tone-professional',
+          'tinymceai-make-tone-casual',
+          'tinymceai-make-tone-friendly'
+        ],
+        tinymceai_translate_menu: [
+          'tinymceai-translate-to-spanish',
+          'tinymceai-translate-to-french',
+          'tinymceai-translate-to-german',
+          'tinymceai-translate-to-chinese'
+        ],
+
+        tinymceai_custom_commands: [
+          {
+            type: 'chat',
+            displayedPrompt: 'Generate Outline',
+            prompt: 'Create a detailed outline for the selected content'
+          },
+          {
+            type: 'action',
+            displayedPrompt: 'Convert to Table',
+            prompt: 'Convert this data into an HTML table',
+            model: 'gpt-4o'
+          }
+        ],
+
+        height: 680,
+        content_style: `
+          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 1.7; color: #1e293b; padding: 16px; }
+          h1 { font-size: 28px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+          h2 { font-size: 22px; font-weight: 600; color: #1e293b; margin-bottom: 10px; }
+          h3 { font-size: 18px; font-weight: 600; color: #334155; margin-bottom: 8px; }
+          p { margin-bottom: 12px; }
+          blockquote { border-left: 3px solid #6366f1; padding-left: 16px; color: #475569; font-style: italic; }
+          table { border-collapse: collapse; width: 100%; }
+          th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; }
+          th { background: #f1f5f9; font-weight: 600; }
+          .mymention { color: #6366f1; font-weight: 500; }
+          code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+        `,
+
+        mentions_fetch,
+        mentions_item_type: 'profile',
+        mentions_menu_complete,
+        mentions_selector: '.mymention',
+        mentions_select,
+        mentions_menu_hover,
+        tinycomments_mode: 'embedded',
+        tinycomments_author_name: commentsAuthor.name,
+        tinycomments_author: `${commentsAuthor.id}`,
+        tinycomments_author_avatar: commentsAuthor.image,
+        mergetags_prefix: '${',
+        mergetags_suffix: '}',
+        mergetags_list: [
+          { value: 'Customer.FirstName', title: "Customer's first name" },
+          { value: 'Customer.LastName', title: "Customer's last name" },
+          { value: 'Customer.Email', title: "Customer's email" },
+          { value: 'Company.Name', title: 'Company name' },
+          { value: 'Current.Date', title: 'Current date' },
+        ],
+        revisionhistory_fetch: () => Promise.resolve([]),
+      });
+    }
+    init();
+  </script>
+</head>
+
+<body>
+  <div class="bg-glow"></div>
+
+  <div class="page-wrapper">
+    <!-- Hero -->
+    <header class="hero">
+      <div class="badge">Powered by TinyMCE AI</div>
+      <h1>Intelligent Editing,<br><span>Built Right In</span></h1>
+      <p>Experience AI-powered writing assistance directly inside your rich text editor. Generate content, refine tone, translate, summarize, and review — all without leaving the page.</p>
+    </header>
+
+    <!-- Feature pills -->
+    <div class="features">
+      <div class="feature-pill"><span class="icon">💬</span> AI Chat Sidebar</div>
+      <div class="feature-pill"><span class="icon">⚡</span> Quick Actions</div>
+      <div class="feature-pill"><span class="icon">🔍</span> AI Review</div>
+      <div class="feature-pill"><span class="icon">🌍</span> Translation</div>
+      <div class="feature-pill"><span class="icon">✨</span> Tone & Style</div>
+      <div class="feature-pill"><span class="icon">📝</span> Grammar Fix</div>
+      <div class="feature-pill"><span class="icon">🤖</span> Multi-Model (GPT-4o, Claude)</div>
+    </div>
+
+    <!-- Editor -->
+    <div class="editor-container">
+      <textarea id="demo-editor">
+        <h1>Quarterly Product Strategy Update</h1>
+        <p>Dear Team,</p>
+        <p>I'm excited to share our progress and plans for the upcoming quarter. We've made significant strides in product development, customer acquisition, and platform reliability. Below is a summary of where we stand and what's ahead.</p>
+
+        <h2>Key Achievements This Quarter</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th>Target</th>
+              <th>Actual</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Monthly Active Users</td>
+              <td>50,000</td>
+              <td>62,400</td>
+              <td>Exceeded (+24%)</td>
+            </tr>
+            <tr>
+              <td>Customer Satisfaction (NPS)</td>
+              <td>70</td>
+              <td>78</td>
+              <td>Exceeded (+11%)</td>
+            </tr>
+            <tr>
+              <td>Platform Uptime</td>
+              <td>99.9%</td>
+              <td>99.97%</td>
+              <td>Exceeded</td>
+            </tr>
+            <tr>
+              <td>New Enterprise Accounts</td>
+              <td>15</td>
+              <td>12</td>
+              <td>On Track</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Product Roadmap Highlights</h2>
+        <p>Our engineering and design teams have been focused on three pillars:</p>
+        <ol>
+          <li><strong>AI-Powered Content Assistance</strong> — Embedded AI capabilities that help users write, edit, and format content faster. This includes real-time grammar correction, tone adjustment, and content generation.</li>
+          <li><strong>Collaboration & Review Workflows</strong> — Inline comments, suggested edits, and revision history that enable seamless team collaboration on documents.</li>
+          <li><strong>Enterprise-Grade Reliability</strong> — Enhanced security, SSO integration, and 99.99% uptime SLA for our premium tier.</li>
+        </ol>
+
+        <h2>Customer Feedback Snapshot</h2>
+        <blockquote>
+          <p>"The AI writing assistant has cut our content creation time by 40%. Our marketing team can now produce twice the output with the same headcount."</p>
+          <p>— Sarah Chen, VP of Marketing, Acme Corp</p>
+        </blockquote>
+
+        <h2>Next Steps</h2>
+        <ul class="tox-checklist">
+          <li>Launch AI-powered content review for all Pro accounts</li>
+          <li>Roll out multi-language translation support (8 languages)</li>
+          <li>Ship the new collaborative editing experience</li>
+          <li>Complete SOC 2 Type II certification</li>
+          <li>Onboard 20 new enterprise accounts</li>
+        </ul>
+
+        <p>I'd love to hear your thoughts. Please use the <strong>AI Chat</strong> sidebar to ask questions about this document, or select any text and try <strong>Quick Actions</strong> to see the AI in action.</p>
+
+        <p>Best regards,<br>The Product Team</p>
+      </textarea>
+    </div>
+
+    <!-- How to try it -->
+    <section class="how-to">
+      <h2>Try It Yourself</h2>
+      <p class="subtitle">Here are a few things to try right now in the editor above.</p>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Open AI Chat</h3>
+          <p>Click the <code>AI Chat</code> button in the toolbar to open the sidebar. Ask it to generate a paragraph, summarize the document, or brainstorm ideas.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Select Text + Quick Actions</h3>
+          <p>Highlight any paragraph and click <code>Quick Actions</code>. Try improving the writing, changing the tone to casual, or translating to Spanish.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>AI Review</h3>
+          <p>Click <code>AI Review</code> to get an instant AI-powered review of the entire document with suggestions for clarity, grammar, and style.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <h3>Switch Models</h3>
+          <p>Choose between <code>GPT-4o</code>, <code>GPT-4o Mini</code>, or <code>Claude 3.5 Sonnet</code> — the right model for every task.</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Built with <a href="https://www.tiny.cloud" target="_blank">TinyMCE</a> — The world's most trusted rich text editor.</p>
+    </footer>
+  </div>
+</body>
+
+</html>
