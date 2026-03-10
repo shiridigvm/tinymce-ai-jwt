@@ -304,27 +304,41 @@
       const commentsAuthor = await (await fetch(`${API_URL}/${commentsAuthorId}`)).json();
 
       tinymce.init({
-        selector: "textarea#demo-editor",
+        selector: "textarea",
         plugins: [
           "accordion", "advtable", "anchor", "advlist", "autolink", "autosave", "advcode", "charmap", "codesample", "directionality", "emoticons", "fullscreen", "quickbars",
           "help", "image", "insertdatetime", "importcss", "link", "lists", "media", "nonbreaking", "pagebreak", "preview", "save", "searchreplace", "table",
           "visualblocks", "visualchars", "wordcount", "autocorrect", "casechange", "checklist", "powerpaste", "a11ychecker", "tinymcespellchecker",
           "tableofcontents", "editimage", "mentions", "mediaembed", "mergetags", "permanentpen", "formatpainter", "footnotes", "pageembed", "linkchecker", "tinycomments", "typography", "inlinecss", "advtemplate", "exportpdf", "exportword", "importword", "revisionhistory", "markdown", "math", "fullpagehtml", "suggestededits", "tinymceai"
         ],
-        toolbar: "aichat aiquickactions aireview | bold italic underline strikethrough | fontfamily fontsize | blocks | forecolor backcolor | align | numlist bullist checklist | link image media table | exportpdf exportword importword | formatpainter removeformat | fullscreen preview code help",
-        menubar: 'file edit insert view format table tools help',
+        toolbar: "tinymceai-chat tinymceai-review tinymceai-quickactions  | fullpagehtml suggestededits| bold italic underline strikethrough subscript superscript | math | exportpdf exportword importword | accordion addtemplate inserttemplate| fontfamily fontsize fontsizeinput | numlist bullist checklist mergetags footnotes footnotesupdate| typography permanentpen formatpainter removeformat forecolor backcolor | blockquote nonbreaking hr pagebreak | casechange styles blocks lineheight | ltr rtl outdent indent | align alignleft aligncenter alignright alignjustify alignnone | h1 h2 h3 h4 h5 h6 h7 |" +
+          "copy cut paste pastetext selectall remove newdocument wordcount searchreplace | undo redo | revisionhistory save cancel restoredraft | fullscreen print preview code help | insertdatetime codesample emoticons charmap | anchor link unlink image media pageembed insertfile | visualblocks visualchars a11ycheck | spellchecker language spellcheckdialog | tableofcontents tableofcontentsupdate |" +
+          "table advtablerownumbering tableclass tablecellclass tablecellvalign tablecellborderwidth tablecellborderstyle tablecaption tablecellbackgroundcolor tablecellbordercolor tablerowheader tablecolheader",
+        // menubar
+        // menubar: 'file edit insert view format table tools help',
+        menubar: 'file edit insert view format table tools mymenu tc custom help',
         menu: {
-          file: { title: 'File', items: 'newdocument restoredraft | importword exportpdf exportword | print deleteallconversations' },
-          edit: { title: 'Edit', items: 'undo redo | cut copy paste pastetext selectall | searchreplace' },
-          insert: { title: 'Insert', items: 'image link media | accordion codesample charmap math hr | mergetags footnotes | tableofcontents' },
-          view: { title: 'View', items: 'code revisionhistory preview | visualchars visualblocks | fullscreen' },
-          format: { title: 'Format', items: 'bold italic underline strikethrough | casechange | formatpainter removeformat' },
-          tools: { title: 'Tools', items: 'typography a11ycheck spellchecker wordcount' },
+          file: { title: 'File', items: 'newdocument restoredraft  | importword exportpdf exportword  | print deleteallconversations' },
+          edit: { title: 'Edit', items: 'undo redo cut copy paste pastetext selectall searchreplace' },
+          insert: { title: 'Insert', items: 'insertfile accordion anchor charmap math codesample hr image insertdatetime | addtemplate inserttemplate | link unlink openlink | footnotes footnotesupdate |media nonbreaking pagebreak tableofcontents checklist template mergetags' },
+          view: { title: 'View', items: ' code revisionhistory preview visualchars visualblocks  fullscreen' },
+          format: { title: 'Format', items: 'formatpainter configurepermanentpen casechange language visualaid align bold italic underline strikethrough subscript superscript removeformat newdocument cut copy paste selectall codeformat fontformats fontsizes lineheight' },
+          tools: { title: 'Tools', items: 'typography a11ycheck spellchecker code wordcount autocorrect capitalization' },
+          tc: { title: 'TinyComments', items: 'addcomment showcomments deleteallconversations' },
+          custom: { title: 'Custom', items: 'undo redo custommenuitem' },
           help: { title: 'Help', items: 'help' },
         },
-        quickbars_selection_toolbar: 'aiquickactions | bold italic | blocks | quicklink blockquote',
+        quickbars_selection_toolbar: 'tinymceai-chat tinymceai-review tinymceai-quickactions | bold italic | blocks | quicklink quicktable quickimage blockquote',
 
-        // AI Configuration
+        // *******************************************************************************************************************************************
+        // The new AI plugin is now working on fiddle one just needs to generate a new JWT token every 24 hours on a fiddle to try things 
+        // out here is an example fiddle: https://fiddle.tiny.cloud/fUvo8MfzI7/0 
+        // new JWT tokens can be generated using this little tool: https://tinyai-demo.tiugo-preview.tiny.cloud/jwt_token_generator_demo.html 
+        // so the process is if AI backend is erroring out with invalid JWT token on a fiddle 
+        // then it's likely expired and you need to re-generate the token.
+        // *******************************************************************************************************************************************
+
+        // REQUIRED: tinymceai_token_provider — Returns Promise<{ token: string }>
         tinymceai_token_provider: () => {
           return fetch('/jwt', {
             method: 'POST',
@@ -332,73 +346,140 @@
           }).then(r => r.json());
         },
 
-        tinymceai_document_id: 'demo-doc-stakeholder',
+        // REQUIRED: tinymceai_service_url — Base URL of the AI backend service
+        // tinymceai_service_url: 'https://tinymceai.api.staging.tiny.cloud/',
+        // tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/',
+
+
+
+        // content_id — Groups conversations by document
+        content_id: 'render_doc_1',
+
+        // tinymceai_sidebar_type — 'static' | 'floating' (default: 'static')
         tinymceai_sidebar_type: 'static',
-        tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/',
-        tinymceai_context_toolbar: ['aichat', 'aiquickactions', 'aireview'],
-        tinymceai_default_model: 'gpt-4o',
+
+        // Model configuration
+        // Available Models: auto (agent-1), gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini,
+        //   claude-4-5-haiku, claude-4-5-sonnet, gemini-3-pro, gemini-3-flash,
+        //   gemini-2-5-flash, gpt-4.1, gpt-4.1-mini
+
+        // tinymceai_default_model — Model ID to select by default
+        tinymceai_default_model: 'auto',
+
+        // tinymceai_allow_model_selection — Show model selection dropdown (default: true)
         tinymceai_allow_model_selection: true,
-        tinymceai_allowed_models: ['gpt-4o', 'gpt-4o-mini', 'claude-3-5-sonnet'],
 
+        // tinymceai_quickactions_menu — Items in the Quick Actions menu
+        // Correct control IDs: ai-quickactions-chat-prompts, ai-quickactions-improve-writing,
+        //   ai-quickactions-continue-writing, ai-quickactions-check-grammar,
+        //   ai-quickactions-change-length, ai-quickactions-change-tone,
+        //   ai-quickactions-translate, ai-quickactions-custom
         tinymceai_quickactions_menu: [
-          'tinymceai-chat-commands',
-          'tinymceai-improve-writing',
-          'tinymceai-fix-grammar',
-          'tinymceai-adjust-length',
-          'tinymceai-change-tone',
-          'tinymceai-translate',
-          'tinymceai-custom-commands'
-        ],
-        tinymceai_chat_commands_menu: [
-          'tinymceai-explain',
-          'tinymceai-summarize',
-          'tinymceai-highlight-key-points'
-        ],
-        tinymceai_adjust_length_menu: [
-          'tinymceai-make-shorter',
-          'tinymceai-make-longer'
-        ],
-        tinymceai_change_tone_menu: [
-          'tinymceai-make-tone-professional',
-          'tinymceai-make-tone-casual',
-          'tinymceai-make-tone-friendly'
-        ],
-        tinymceai_translate_menu: [
-          'tinymceai-translate-to-spanish',
-          'tinymceai-translate-to-french',
-          'tinymceai-translate-to-german',
-          'tinymceai-translate-to-chinese'
+          'ai-quickactions-chat-prompts',
+          'ai-quickactions-improve-writing',
+          'ai-quickactions-continue-writing',
+          'ai-quickactions-check-grammar',
+          'ai-quickactions-change-length',
+          'ai-quickactions-change-tone',
+          'ai-quickactions-translate',
+          'ai-quickactions-custom'
         ],
 
-        tinymceai_custom_commands: [
+        // tinymceai_quickactions_chat_prompts — Items in the "Chat commands" sub-menu
+        // Correct control IDs: ai-chat-explain, ai-chat-summarize, ai-chat-highlight-key-points
+        tinymceai_quickactions_chat_prompts: [
+          'ai-chat-explain',
+          'ai-chat-summarize',
+          'ai-chat-highlight-key-points'
+        ],
+
+        // tinymceai_quickactions_change_tone_menu — Items in the "Change tone" sub-menu
+        // Correct control IDs: ai-quickactions-tone-casual, ai-quickactions-tone-direct,
+        //   ai-quickactions-tone-friendly, ai-quickactions-tone-confident, ai-quickactions-tone-professional
+        tinymceai_quickactions_change_tone_menu: [
+          'ai-quickactions-tone-casual',
+          'ai-quickactions-tone-direct',
+          'ai-quickactions-tone-friendly',
+          'ai-quickactions-tone-confident',
+          'ai-quickactions-tone-professional'
+        ],
+
+        // tinymceai_languages — Languages in the "Translate" sub-menu
+        // Each item: { title: string, language: string }
+        tinymceai_languages: [
+          { title: 'English', language: 'english' },
+          { title: 'Chinese (Simplified)', language: 'chinese' },
+          { title: 'Spanish', language: 'spanish' },
+          { title: 'German', language: 'german' },
+          { title: 'Japanese', language: 'japanese' },
+          { title: 'Portuguese', language: 'portuguese' },
+          { title: 'Korean', language: 'korean' },
+          { title: 'Italian', language: 'italian' },
+          { title: 'Russian', language: 'russian' },
+          { title: 'French', language: 'french' }
+        ],
+
+        // tinymceai_quickactions_custom — Custom commands in the "Other" sub-menu
+        // Chat type: { type: 'chat', title: string, prompt: string }
+        // Action type: { type: 'action', title: string, prompt: string, model: string }
+        tinymceai_quickactions_custom: [
           {
             type: 'chat',
-            displayedPrompt: 'Generate Outline',
+            title: 'Generate Outline',
             prompt: 'Create a detailed outline for the selected content'
           },
           {
             type: 'action',
-            displayedPrompt: 'Convert to Table',
+            title: 'Convert to Table',
             prompt: 'Convert this data into an HTML table',
-            model: 'gpt-4o'
+            model: 'gpt-4.1'
+          },
+          {
+            type: 'chat',
+            title: 'Explain Like I\'m 5',
+            prompt: 'Explain the selected content as if I am a 5 year old child'
           }
         ],
 
-        height: 680,
-        content_style: `
-          body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 1.7; color: #1e293b; padding: 16px; }
-          h1 { font-size: 28px; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
-          h2 { font-size: 22px; font-weight: 600; color: #1e293b; margin-bottom: 10px; }
-          h3 { font-size: 18px; font-weight: 600; color: #334155; margin-bottom: 8px; }
-          p { margin-bottom: 12px; }
-          blockquote { border-left: 3px solid #6366f1; padding-left: 16px; color: #475569; font-style: italic; }
-          table { border-collapse: collapse; width: 100%; }
-          th, td { border: 1px solid #e2e8f0; padding: 10px 14px; text-align: left; }
-          th { background: #f1f5f9; font-weight: 600; }
-          .mymention { color: #6366f1; font-weight: 500; }
-          code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
-        `,
+        // tinymceai_chat_welcome_message — Custom HTML welcome message in chat sidebar
+        tinymceai_chat_welcome_message: '<p><strong>Welcome to AI Chat!</strong></p><p>I can help you write, edit, review, and brainstorm. Ask me anything or use the quick actions above.</p>',
 
+        // tinymceai_chat_fetch_sources — Provides a list of external sources users can attach
+        // Returns Promise<ExternalSourcesList[]>
+        tinymceai_chat_fetch_sources: () => {
+          console.log('[tinymceai] tinymceai_chat_fetch_sources called');
+          return Promise.resolve([
+            {
+              label: 'Sample Documents',
+              icon: 'document-properties',
+              sources: [
+                { label: 'Company Guidelines', id: 'doc-guidelines', type: 'web-resource' },
+                { label: 'Product Roadmap', id: 'doc-roadmap', type: 'file' },
+                { label: 'FAQ Document', id: 'doc-faq', type: 'web-resource' }
+              ]
+            }
+          ]);
+        },
+
+        // tinymceai_chat_fetch_source — Fetches a specific external source by ID
+        // Returns Promise<ExternalContextSource> — { type: 'file', file: File } or { type: 'web-resource', url: string }
+        tinymceai_chat_fetch_source: (id) => {
+          console.log('[tinymceai] tinymceai_chat_fetch_source called with id:', id);
+          if (id === 'doc-guidelines') {
+            return Promise.resolve({ type: 'web-resource', url: 'https://www.tiny.cloud' });
+          } else if (id === 'doc-roadmap') {
+            const blob = new Blob(['Sample roadmap content for testing'], { type: 'text/plain' });
+            const file = new File([blob], 'roadmap.txt', { type: 'text/plain' });
+            return Promise.resolve({ type: 'file', file: file });
+          } else {
+            return Promise.resolve({ type: 'web-resource', url: 'https://www.tiny.cloud/docs' });
+          }
+        },
+        sidebar_show: 'tinymceai-chat', // would auto-open the AI Chat sidebar as soon as the editor loads.
+        ui_mode: 'combined',// Default is 'combined', Split -affects how the static/floating sidebar is rendered and positioned relative to the editor
+
+        height: 600,
+        content_style: '.mymention{ color: green; }',
         mentions_fetch,
         mentions_item_type: 'profile',
         mentions_menu_complete,
@@ -409,16 +490,63 @@
         tinycomments_author_name: commentsAuthor.name,
         tinycomments_author: `${commentsAuthor.id}`,
         tinycomments_author_avatar: commentsAuthor.image,
-        mergetags_prefix: '${',
-        mergetags_suffix: '}',
-        mergetags_list: [
-          { value: 'Customer.FirstName', title: "Customer's first name" },
-          { value: 'Customer.LastName', title: "Customer's last name" },
-          { value: 'Customer.Email', title: "Customer's email" },
-          { value: 'Company.Name', title: 'Company name' },
-          { value: 'Current.Date', title: 'Current date' },
+        // mergetags
+        mergetags_prefix: '${', // default value '{{'
+        mergetags_suffix: '}', // default value '}}',
+        mergetags_list: [{
+          value: 'Current.Date',
+          title: 'Current date in DD/MM/YYYY format'
+        },
+        {
+          value: 'Campaign.Toc',
+          title: 'Linked table of contents in your campaign'
+        },
+        {
+          title: "Phone",
+          menu: [{
+            value: "Phone.Home"
+          },
+          {
+            value: "Phone.Work"
+          }
+          ]
+        },
+        {
+          title: 'Person',
+          menu: [{
+            value: 'Person.Name',
+          },
+          {
+            value: 'Person.Name.First',
+          },
+          {
+            value: 'Person.Name.Last'
+          },
+          {
+            value: 'Person.Name.Full'
+          },
+          {
+            title: 'Email',
+            menu: [{
+              value: 'Person.Email.Work'
+            },
+            {
+              value: 'Person.Email.Home'
+            },
+            ]
+          }
+          ]
+        }
         ],
+        // Docs Converters - service URLS - not for production use and public demos
+        // exportpdf_service_url: "https://exportpdf.converter.tiny.cloud",
+        // exportword_service_url: "https://exportdocx.converter.tiny.cloud",
+        // importword_service_url: "https://importdocx.converter.tiny.cloud",
+        // spellchecker_rpc_url: 'https://ephox-spelling',
+
+        // ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
         revisionhistory_fetch: () => Promise.resolve([]),
+
       });
     }
     init();

@@ -38,6 +38,36 @@ kuzO4gEFj3Fg+uxJ0xEbGbR3Fl+Xrux5mAEeaKZJ7ILU4Qb2vvuQBVbLOQF+2EAr
 -----END PRIVATE KEY-----
 `;
 
+// const DEFAULT_PRIVATE_KEY = `
+// -----BEGIN PRIVATE KEY-----
+// MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDIgwIiqtI4UX4R
+// Rj9tsy/ADe2CepvG1cnppDkwqxIgPC+kYoynadWB0crL+Zq8IfEwgvMmIlaqLbuT
+// t6Eii28MViYBefmvRp1hgzgeRyE2EL1A30rOeRz0q/Ofett83uMQxOnDfh9cK8rN
+// 7kkmSsRjJnpoDqPGwhg89j1FBExTrm51aC5E2D8aiQqfRqfoewuBeto6Sdc9t54E
+// oPeW11VeD7qjokK/gvYfd2H2pDrG33fSzois0C6x3dA8rAoWDoH2G2YnFdfhMeFD
+// ZlisJwJbgPBpmcLDbi0DjrFmlHQncLWlvKQ+Vje2naEYG5r/4OPQvegJ3vF76GPS
+// 9jS15wUXAgMBAAECggEAHmPDauytSuLdsrw3uHvRehAXq3sYvrnqoyeEPCJEGjBK
+// X5BI1XDUGXEUsEs8OVUC9gF1h8CUQQZdvnrfiFmjXYvLBoCYUrPm/ioB/eN1nvj0
+// 2MRe//cu5824nAxmABbUnwHb6jNkiQw2wx+2j4ACeYKR8nvRimTNgU59enHh0vFr
+// 5l2dmUdSO5DEgcDLbBlbbAwpMwkqUhovdnSjP57x3XR9Sk6xmg+L6QtdfpP6jC09
+// i7KUR3Sz2v3e8ni3y4xFSDcC/zp3F6rwez21USKZxeMWNbLFOYN5ehd6vHGenDzt
+// 1+Qgkvedkrgw2ysrJc2sXL8j07S+qVz5HDAA9xSjtQKBgQD32xAv3eZCjEiv2uKV
+// uxdRGHcawuEmeCsZQXnXW2l7dc7AtotOTBGbRtA5PMC1Xc6k0TQ9QsxZZFPyJITJ
+// nMDse2uufYobXX+4KSThKY2KjSsF/8VQZgkdGe6EMZGVasp+1Qe3c8mbJNeO+ovM
+// K2L3EdwnZY02fsqrGu6VRJjLUwKBgQDPGbFLUOyYasvR0Ac9hq+p7kbTHQWXobcs
+// ++t5G7xwJURNo1yfN44eT79pG9t6CCj1ljdA4FXjA3KqLJdo2Eirf5n7HxtHsKo2
+// 3Fo4bQin0lWEm0fHcopwDZ1axYiJXxeE6q2egvSMmUEGExAYEcFAtTiebpoZtfHJ
+// pc0Lkk4qrQKBgH6wx+5fs2ISyNiyvp0ge8OlCMRyFpoOVKFdOYVeIWXNCviwljZY
+// ZauEH80SA8LxBz5x/QzPRxruUIZ2KjXP3UFDuQABBYYFXdJpnYNGNSY8EGDJozb8
+// YO4yIhwKJktEwergw0f/dG7L/y8DXE/pYXW++FRe8TaIytl5M7iyzpMnAoGAFURk
+// KoHS6gv9hjxAohbUrzSi3UcbreiTcPElyzgH79RD4V0nQ8pms8Iou9h6f1ubKS0V
+// 23muGDPgcI1HtyKOw93EqD8XhBMmR5/1O9omi2VUFtwDUP34LW2YfRvP25uCRMn8
+// rkxwZIfQX5lRi8c2+zgg6lQdSwqeG8EE/200zbkCgYEArHyTdrv+1Myi3u/P9Xyt
+// hF6Wr9gnLWjf+XQxVuED7M10eU9682hD+njQoloIDIb0Ptktk8JWPwC9fQOT9lMX
+// TkmkZyXkabHSPns/Td3ACCBT2vLQ2c+ut2KLcU3JXERMnlHZVEveqLQuENSbqtOw
+// Vt1zav3HQiFZETthtfhO8yc=
+// -----END PRIVATE KEY-----
+// `;
 const rawKey = process.env.TINYMCE_PRIVATE_KEY;
 const privateKey = rawKey ? rawKey.replace(/\\n/g, '\n') : DEFAULT_PRIVATE_KEY;
 const apiKey = process.env.TINYMCE_API_KEY || '451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu';
@@ -49,7 +79,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/jwt', (req, res) => {
     const payload = {
         aud: apiKey, // TinyMCE API key (from env var or default)
-        sub: 'tinyqateam', // Replace with actual user identifier
+        sub: 'tinyqateam10mar26', // Replace with actual user identifier
         iat: Math.floor(Date.now() / 1000), // Issue timestamp
         exp: Math.floor(Date.now() / 1000) + (60 * 60), // Expiration time (60 minutes)
         auth: {
