@@ -88,7 +88,9 @@ app.post('/jwt', (req, res) => {
                     'ai:conversations:read',
                     'ai:conversations:write',
                     'ai:conversations:context:*',
-                    'ai:models:agent',
+                    // 'ai:models:anthropic:*',
+                    'ai:models:*',
+                    // 'ai:models:anthropic:claude-4-sonnet',
                     'ai:actions:system:*',
                     'ai:reviews:system:*'
                 ]

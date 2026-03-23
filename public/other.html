@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>TinyMCE with TinyMCE AI (Standalone)</title>
+  <script
+    src="https://cdn.staging.tiny.cloud/1/451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu/tinymce/8-testing/tinymce.min.js"
+    referrerpolicy="origin" crossorigin="anonymous"></script>
+
+  <script type="text/javascript">
+    // =====================================================================
+    // CONFIGURE THIS: Set to your Render.com JWT server URL
+    // =====================================================================
+    const JWT_SERVER_URL = 'https://tinymce-ai-jwt.onrender.com';
+
+    const API_URL = 'https://demouserdirectory.tiny.cloud/v1/users';
+
+    const mentions_fetch = async (query, success) => {
+      try {
+        const searchPhrase = query.term.toLowerCase();
+        const users = (await (await fetch(`${API_URL}?q=${encodeURIComponent(searchPhrase)}`)).json());
+        success(users.data);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const mentions_menu_complete = (editor, userInfo) => {
+      const span = editor.getDoc().createElement('span');
+      span.className = 'mymention';
+      span.setAttribute('data-mention-id', userInfo.id);
+      span.appendChild(editor.getDoc().createTextNode('@' + userInfo.name));
+      return span;
+    };
+
+    const mentions_select = async (mention, success) => {
+      const id = mention.getAttribute('data-mention-id');
+      try {
+        const employee = await (await fetch(`${API_URL}/${id}`)).json();
+
+        const div = document.createElement('div');
+        div.innerHTML = (
+          '<div class="card">' +
+          '<img class="avatar" src="' + employee.image + '">' +
+          '<h1>' + employee.name + '</h1>' +
+          '<p>' + employee.description + '</p>' +
+          '</div>'
+        );
+        success(div);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    const mentions_menu_hover = async (userInfo, success) => {
+      const div = document.createElement('div');
+      div.innerHTML = (
+        '<div class="card">' +
+        '<img class="avatar" src="' + userInfo.image + '">' +
+        '<h1>' + userInfo.name + '</h1>' +
+        '<p>' + userInfo.description + '</p>' +
+        '</div>'
+      );
+      success(div);
+    };
+
+
+
+    async function init() {
+      const commentsAuthorId = 'james-wilson';
+      const commentsAuthor = await (await fetch(`${API_URL}/${commentsAuthorId}`)).json();
+
+      tinymce.init({
+        selector: "textarea",
+        plugins: [
+          "accordion", "advtable", "anchor", "advlist", "autolink", "autosave", "advcode", "charmap", "codesample", "directionality", "emoticons", "fullscreen", "quickbars",
+          "help", "image", "insertdatetime", "importcss", "link", "lists", "media", "nonbreaking", "pagebreak", "preview", "save", "searchreplace", "table",
+          "visualblocks", "visualchars", "wordcount", "autocorrect", "casechange", "checklist", "powerpaste", "a11ychecker", "tinymcespellchecker",
+          "tableofcontents", "editimage", "mentions", "mediaembed", "mergetags", "permanentpen", "formatpainter", "footnotes", "pageembed", "linkchecker", "tinycomments", "typography", "inlinecss", "advtemplate", "exportpdf", "exportword", "importword", "revisionhistory", "markdown", "math", "fullpagehtml", "suggestededits", "tinymceai"
+        ],
+        toolbar: "tinymceai-chat tinymceai-review tinymceai-quickactions  | fullpagehtml suggestededits| bold italic underline strikethrough subscript superscript | math | exportpdf exportword importword | accordion addtemplate inserttemplate| fontfamily fontsize fontsizeinput | numlist bullist checklist mergetags footnotes footnotesupdate| typography permanentpen formatpainter removeformat forecolor backcolor | blockquote nonbreaking hr pagebreak | casechange styles blocks lineheight | ltr rtl outdent indent | align alignleft aligncenter alignright alignjustify alignnone | h1 h2 h3 h4 h5 h6 h7 |" +
+          "copy cut paste pastetext selectall remove newdocument wordcount searchreplace | undo redo | revisionhistory save cancel restoredraft | fullscreen print preview code help | insertdatetime codesample emoticons charmap | anchor link unlink image media pageembed insertfile | visualblocks visualchars a11ycheck | spellchecker language spellcheckdialog | tableofcontents tableofcontentsupdate |" +
+          "table advtablerownumbering tableclass tablecellclass tablecellvalign tablecellborderwidth tablecellborderstyle tablecaption tablecellbackgroundcolor tablecellbordercolor tablerowheader tablecolheader",
+        // menubar
+        // menubar: 'file edit insert view format table tools help',
+        menubar: 'file edit insert view format table tools mymenu tc custom help',
+        menu: {
+          file: { title: 'File', items: 'newdocument restoredraft  | importword exportpdf exportword  | print deleteallconversations' },
+          edit: { title: 'Edit', items: 'undo redo cut copy paste pastetext selectall searchreplace' },
+          insert: { title: 'Insert', items: 'insertfile accordion anchor charmap math codesample hr image insertdatetime | addtemplate inserttemplate | link unlink openlink | footnotes footnotesupdate |media nonbreaking pagebreak tableofcontents checklist template mergetags' },
+          view: { title: 'View', items: ' code revisionhistory preview visualchars visualblocks  fullscreen' },
+          format: { title: 'Format', items: 'formatpainter configurepermanentpen casechange language visualaid align bold italic underline strikethrough subscript superscript removeformat newdocument cut copy paste selectall codeformat fontformats fontsizes lineheight' },
+          tools: { title: 'Tools', items: 'typography a11ycheck spellchecker code wordcount autocorrect capitalization' },
+          tc: { title: 'TinyComments', items: 'addcomment showcomments deleteallconversations' },
+          custom: { title: 'Custom', items: 'undo redo custommenuitem' },
+          help: { title: 'Help', items: 'help' },
+        },
+        quickbars_selection_toolbar: 'tinymceai-chat tinymceai-review tinymceai-quickactions | bold italic | blocks | quicklink quicktable quickimage blockquote',
+
+        // *******************************************************************************************************************************************
+        // The new AI plugin is now working on fiddle one just needs to generate a new JWT token every 24 hours on a fiddle to try things 
+        // out here is an example fiddle: https://fiddle.tiny.cloud/fUvo8MfzI7/0 
+        // new JWT tokens can be generated using this little tool: https://tinyai-demo.tiugo-preview.tiny.cloud/jwt_token_generator_demo.html 
+        // so the process is if AI backend is erroring out with invalid JWT token on a fiddle 
+        // then it's likely expired and you need to re-generate the token.
+        // *******************************************************************************************************************************************
+
+        // REQUIRED: tinymceai_token_provider — Returns Promise<{ token: string }>
+        tinymceai_token_provider: () => {
+          return fetch(`${JWT_SERVER_URL}/jwt`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          }).then(r => r.json());
+        },
+
+        // REQUIRED: tinymceai_service_url — Base URL of the AI backend service
+        // tinymceai_service_url: 'https://tinymceai.api.staging.tiny.cloud/',
+        // tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/',
+
+
+
+        // content_id — Groups conversations by document
+        content_id: 'render_doc_1',
+
+        // tinymceai_sidebar_type — 'static' | 'floating' (default: 'static')
+        tinymceai_sidebar_type: 'static',
+
+        // Model configuration
+        // Available Models: auto (agent-1), gpt-5.2, gpt-5.1, gpt-5, gpt-5-mini,
+        //   claude-4-5-haiku, claude-4-5-sonnet, gemini-3-pro, gemini-3-flash,
+        //   gemini-2-5-flash, gpt-4.1, gpt-4.1-mini
+
+        // tinymceai_default_model — Model ID to select by default
+        tinymceai_default_model: 'auto',
+
+        // tinymceai_allow_model_selection — Show model selection dropdown (default: true)
+        tinymceai_allow_model_selection: true,
+
+        // tinymceai_quickactions_menu — Items in the Quick Actions menu
+        // Correct control IDs: ai-quickactions-chat-prompts, ai-quickactions-improve-writing,
+        //   ai-quickactions-continue-writing, ai-quickactions-check-grammar,
+        //   ai-quickactions-change-length, ai-quickactions-change-tone,
+        //   ai-quickactions-translate, ai-quickactions-custom
+        tinymceai_quickactions_menu: [
+          'ai-quickactions-chat-prompts',
+          'ai-quickactions-improve-writing',
+          'ai-quickactions-continue-writing',
+          'ai-quickactions-check-grammar',
+          'ai-quickactions-change-length',
+          'ai-quickactions-change-tone',
+          'ai-quickactions-translate',
+          'ai-quickactions-custom'
+        ],
+
+        // tinymceai_quickactions_chat_prompts — Items in the "Chat commands" sub-menu
+        // Correct control IDs: ai-chat-explain, ai-chat-summarize, ai-chat-highlight-key-points
+        tinymceai_quickactions_chat_prompts: [
+          'ai-chat-explain',
+          'ai-chat-summarize',
+          'ai-chat-highlight-key-points'
+        ],
+
+        // tinymceai_quickactions_change_tone_menu — Items in the "Change tone" sub-menu
+        // Correct control IDs: ai-quickactions-tone-casual, ai-quickactions-tone-direct,
+        //   ai-quickactions-tone-friendly, ai-quickactions-tone-confident, ai-quickactions-tone-professional
+        tinymceai_quickactions_change_tone_menu: [
+          'ai-quickactions-tone-casual',
+          'ai-quickactions-tone-direct',
+          'ai-quickactions-tone-friendly',
+          'ai-quickactions-tone-confident',
+          'ai-quickactions-tone-professional'
+        ],
+
+        // tinymceai_languages — Languages in the "Translate" sub-menu
+        // Each item: { title: string, language: string }
+        tinymceai_languages: [
+          { title: 'English', language: 'english' },
+          { title: 'Chinese (Simplified)', language: 'chinese' },
+          { title: 'Spanish', language: 'spanish' },
+          { title: 'German', language: 'german' },
+          { title: 'Japanese', language: 'japanese' },
+          { title: 'Portuguese', language: 'portuguese' },
+          { title: 'Korean', language: 'korean' },
+          { title: 'Italian', language: 'italian' },
+          { title: 'Russian', language: 'russian' },
+          { title: 'French', language: 'french' }
+        ],
+
+        // tinymceai_quickactions_custom — Custom commands in the "Other" sub-menu
+        // Chat type: { type: 'chat', title: string, prompt: string }
+        // Action type: { type: 'action', title: string, prompt: string, model: string }
+        tinymceai_quickactions_custom: [
+          {
+            type: 'chat',
+            title: 'Generate Outline',
+            prompt: 'Create a detailed outline for the selected content'
+          },
+          {
+            type: 'action',
+            title: 'Convert to Table',
+            prompt: 'Convert this data into an HTML table',
+            model: 'gpt-4.1'
+          },
+          {
+            type: 'chat',
+            title: 'Explain Like I\'m 5',
+            prompt: 'Explain the selected content as if I am a 5 year old child'
+          }
+        ],
+
+        // tinymceai_chat_welcome_message — Custom HTML welcome message in chat sidebar
+        tinymceai_chat_welcome_message: '<p><strong>Welcome to AI Chat!</strong></p><p>I can help you write, edit, review, and brainstorm. Ask me anything or use the quick actions above.</p>',
+
+        // tinymceai_chat_fetch_sources — Provides a list of external sources users can attach
+        // Returns Promise<ExternalSourcesList[]>
+        tinymceai_chat_fetch_sources: () => {
+          console.log('[tinymceai] tinymceai_chat_fetch_sources called');
+          return Promise.resolve([
+            {
+              label: 'Sample Documents',
+              icon: 'document-properties',
+              sources: [
+                { label: 'Company Guidelines', id: 'doc-guidelines', type: 'web-resource' },
+                { label: 'Product Roadmap', id: 'doc-roadmap', type: 'file' },
+                { label: 'FAQ Document', id: 'doc-faq', type: 'web-resource' }
+              ]
+            }
+          ]);
+        },
+
+        // tinymceai_chat_fetch_source — Fetches a specific external source by ID
+        // Returns Promise<ExternalContextSource> — { type: 'file', file: File } or { type: 'web-resource', url: string }
+        tinymceai_chat_fetch_source: (id) => {
+          console.log('[tinymceai] tinymceai_chat_fetch_source called with id:', id);
+          if (id === 'doc-guidelines') {
+            return Promise.resolve({ type: 'web-resource', url: 'https://www.tiny.cloud' });
+          } else if (id === 'doc-roadmap') {
+            const blob = new Blob(['Sample roadmap content for testing'], { type: 'text/plain' });
+            const file = new File([blob], 'roadmap.txt', { type: 'text/plain' });
+            return Promise.resolve({ type: 'file', file: file });
+          } else {
+            return Promise.resolve({ type: 'web-resource', url: 'https://www.tiny.cloud/docs' });
+          }
+        },
+        sidebar_show: 'tinymceai-chat', // would auto-open the AI Chat sidebar as soon as the editor loads.
+        ui_mode: 'combined',// Default is 'combined', Split -affects how the static/floating sidebar is rendered and positioned relative to the editor
+
+        height: 600,
+        content_style: '.mymention{ color: green; }',
+        mentions_fetch,
+        mentions_item_type: 'profile',
+        mentions_menu_complete,
+        mentions_selector: '.mymention',
+        mentions_select,
+        mentions_menu_hover,
+        tinycomments_mode: 'embedded',
+        tinycomments_author_name: commentsAuthor.name,
+        tinycomments_author: `${commentsAuthor.id}`,
+        tinycomments_author_avatar: commentsAuthor.image,
+        // mergetags
+        mergetags_prefix: '${', // default value '{{'
+        mergetags_suffix: '}', // default value '}}',
+        mergetags_list: [{
+          value: 'Current.Date',
+          title: 'Current date in DD/MM/YYYY format'
+        },
+        {
+          value: 'Campaign.Toc',
+          title: 'Linked table of contents in your campaign'
+        },
+        {
+          title: "Phone",
+          menu: [{
+            value: "Phone.Home"
+          },
+          {
+            value: "Phone.Work"
+          }
+          ]
+        },
+        {
+          title: 'Person',
+          menu: [{
+            value: 'Person.Name',
+          },
+          {
+            value: 'Person.Name.First',
+          },
+          {
+            value: 'Person.Name.Last'
+          },
+          {
+            value: 'Person.Name.Full'
+          },
+          {
+            title: 'Email',
+            menu: [{
+              value: 'Person.Email.Work'
+            },
+            {
+              value: 'Person.Email.Home'
+            },
+            ]
+          }
+          ]
+        }
+        ],
+        // Docs Converters - service URLS - not for production use and public demos
+        // exportpdf_service_url: "https://exportpdf.converter.tiny.cloud",
+        // exportword_service_url: "https://exportdocx.converter.tiny.cloud",
+        // importword_service_url: "https://importdocx.converter.tiny.cloud",
+        // spellchecker_rpc_url: 'https://ephox-spelling',
+
+        // ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
+        revisionhistory_fetch: () => Promise.resolve([]),
+
+      });
+    }
+    init();
+
+    function toggleEditorMode(mode) {
+      const editor = tinymce.activeEditor;
+      if (!editor) {
+        return;
+      }
+      // TinyMCE 6+ uses editor.mode.set(...)
+      if (editor.mode && typeof editor.mode.set === 'function') {
+        editor.mode.set(mode);
+        return;
+      }
+      if (typeof editor.setMode === 'function') {
+        editor.setMode(mode);
+      }
+    }
+  </script>
+  <style>
+    textarea#mentions {
+      height: 350px;
+    }
+
+    div.card,
+    .tox div.card {
+      width: 240px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      box-shadow: 0 4px 8px 0 rgba(34, 47, 62, .1);
+      padding: 8px;
+      font-size: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    div.card::after,
+    .tox div.card::after {
+      content: "";
+      clear: both;
+      display: table;
+    }
+
+    div.card h1,
+    .tox div.card h1 {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 0 0 8px;
+      padding: 0;
+      line-height: normal;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    div.card p,
+    .tox div.card p {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    div.card img.avatar,
+    .tox div.card img.avatar {
+      width: 48px;
+      height: 48px;
+      margin-right: 8px;
+      float: left;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>TinyMCE AI Demo (Standalone — loads JWT from remote server)</h1>
+  <textarea>
+    <h1 id="mcetoc_1ipdv0ulf969"></h1>
+            <div class="mce-toc">
+              <h1>Table of Contents</h1>
+              <ul>
+                <li><a href="#mcetoc_1ipdv0ulf96a">Checklist</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96b">Enhanced Media Embed</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96c">Enhanced Tables</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96d">Math</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96e">Mentions</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96f">Merge Tags</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96g">Page Embed</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96h">Accordion</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96i">Anchor</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96j">Character Map</a></li>
+                <li><a href="#mcetoc_1ipdvq0109q7">Code Sample</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96l">Emoticons</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96m">Image</a></li>
+                <li><a href="#mcetoc_1ipdvq0109q8">Lists &amp; List Styles</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96p">Media</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96q">Nonbreaking Space</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96r">Page Break</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96s">Table</a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96s">GoToAnchor</a></li>
+                <li><a href="#mcetoc_1ipdvq0109q9">Content </a></li>
+                <li><a href="#mcetoc_1ipdv0ulf96t">Footnotes</a></li>
+              </ul>
+            </div>
+            <h1 id="mcetoc_1ipdv0ulf96a">Checklist</h1>
+            <ul class="tox-checklist">
+              <li>One</li>
+              <li>Two <ul class="tox-checklist">
+                  <li>Two.1</li>
+                  <li>Two.2</li>
+                </ul>
+              </li>
+              <li>Three <ul class="tox-checklist">
+                  <li>Three.2 <ul class="tox-checklist">
+                      <li>Three.2.1</li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <h1 id="mcetoc_1ipdv0ulf96b">Enhanced Media Embed</h1>
+            <div style="max-width: 800px;" data-ephox-embed-iri="https://youtu.be/Ff6nar7Hr78?feature=shared">
+              <div style="left: 0; width: 100%; height: 0; position: relative; padding-bottom: 56.25%;"><iframe style="top: 0; left: 0; width: 100%; height: 100%; position: absolute; border: 0;" src="https://www.youtube.com/embed/Ff6nar7Hr78?rel=0" scrolling="no" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share;" allowfullscreen="allowfullscreen"></iframe></div>
+            </div>
+            <p>&nbsp;</p>
+            <h1 id="mcetoc_1ipdv0ulf96c">Enhanced Tables</h1>
+            <table style="width: 50%; height: 217.031px;" border="1" data-snooker-col-series="numeric" data-snooker-locked-cols="0">
+              <colgroup>
+                <col style="width: 7.69936%;" />
+                <col style="width: 25.6645%;" />
+                <col style="width: 33.3639%;" />
+                <col style="width: 33.3639%;" />
+              </colgroup>
+              <tbody>
+                <tr style="height: 36.1719px;">
+                  <td contenteditable="false">1</td>
+                  <td>A</td>
+                  <td>B</td>
+                  <td>C</td>
+                </tr>
+                <tr style="height: 36.1719px;">
+                  <td contenteditable="false">2</td>
+                  <td>
+                    <p>Checklist Enhanced Media Embed Enhanced Tables Footnotes Math Mentions Merge Tags Page Embed Table of Contents Accordion Anchor Character Map Code Sample Emoticons Image Lists List Styles Media Nonbreaking Space Page Break Table</p>
+                  </td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr style="height: 36.1719px;">
+                  <td contenteditable="false">3</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr style="height: 36.1719px;">
+                  <td contenteditable="false">4</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>
+                    <p>Checklist Enhanced Media Embed Enhanced Tables Footnotes Math Mentions Merge Tags Page Embed Table of Contents Accordion Anchor Character Map Code Sample Emoticons Image Lists List Styles Media Nonbreaking Space Page Break Table</p>
+                  </td>
+                </tr>
+                <tr style="height: 36.1719px;">
+                  <td contenteditable="false">5</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr style="height: 36.1719px;">
+                  <td contenteditable="false">6</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+              </tbody>
+            </table>
+            <h1 id="mcetoc_1ipdv0ulf96d">Math</h1>
+            <p>&nbsp;<tiny-math-inline formula="S_\delta"></tiny-math-inline>'s</p>
+            <p><tiny-math-inline formula="{x_{k-1}}{x_k}"></tiny-math-inline></p>
+            <p>&nbsp;<tiny-math-inline formula="S_{\delta_1}"></tiny-math-inline>,&nbsp;<tiny-math-inline formula="S_{\delta_2}"></tiny-math-inline>&nbsp;<tiny-math-inline formula="\displaystyle\mathop{L}_{n\doteq\infty}\delta_n=0"></tiny-math-inline></p>
+            <tiny-math-block formula="\mathop{L}_{n\doteq\infty} S_{\delta_n} = \int_a^b f(x)dx."></tiny-math-block>
+            <p><sup id="footnote_75157979611745299752311" class="mce-footnote"><a href="#footnotes_entry_75157979611745299752311">1</a></sup></p>
+            <tiny-math-block formula="\displaystyle \int_a^b f(x)dx =  \mathop{L}_{n\doteq\infty} \sum_{k=1}^n f(a+k\Delta x)\Delta x,  \text{ where }  \Delta x=\frac{b-a}{n}."></tiny-math-block>
+            <p>&nbsp;</p>
+            <h1 id="mcetoc_1ipdv0ulf96e">Mentions</h1>
+            <p><span class="mentionsmentionsmentions" style="color: green;" data-mce-mentions-id="virginiaturner">@virginiaturner</span> <span class="mentionsmentionsmentions" style="color: green;" data-mce-mentions-id="terrygreen333">@terrygreen333</span></p>
+            <h1 id="mcetoc_1ipdv0ulf96f">Merge Tags</h1>
+            <p>${Campaign.Toc}</p>
+            <p>${Current.Date}</p>
+            <h1 id="mcetoc_1ipdv0ulf96g">Page Embed</h1>
+            <div class="tiny-pageembed" style="display: inline-block; position: relative;"><iframe title="Test Title" src="https://sirca.org.au" name="Test Name" width="400" height="300" longdesc="Long Desc" scrolling="yes" sandbox=""></iframe></div>
+            <p>&nbsp;</p>
+            <h1 id="mcetoc_1ipdv0ulf96h">Accordion</h1>
+            <details class="mce-accordion">
+              <summary>Accordion summary...new summary</summary>
+              <p>Accordion body...new body</p>
+              <p>matter 1</p>
+              <p>matter 2</p>
+              <p>matter 3</p>
+              <ol>
+                <li>list 1</li>
+                <li>list 2</li>
+                <li>list 3</li>
+              </ol>
+            </details>
+            <h1 id="mcetoc_1ipdv0ulf96i"><a id="ThisisAnchor"></a>Anchor</h1>
+            <p>&nbsp;</p>
+            <h1 id="mcetoc_1ipdv0ulf96j">Character Map</h1>
+            <p>&piv;</p>
+            <h1 id="mcetoc_1ipdvq0109q7">Code Sample</h1>
+            <pre class="language-javascript"><code>// Sample checklist data
+            const checklistItems = [
+              "Enhanced Media Embed",
+              "Enhanced Tables",
+              "Footnotes",
+              "Math",
+              "Mentions",
+              "Merge Tags",
+              "Page Embed",
+              "Table of Contents",
+              "Accordion",
+              "Anchor",
+              "Character Map",
+              "Code Sample",
+              "Emoticons",
+              "Image",
+              "Lists",
+              "List Styles",
+              "Media",
+              "Nonbreaking Space",
+              "Page Break",
+              "Table"
+            ];
+            
+            // Function to display checklist items in a UL with id="checklist"
+            function showChecklist() {
+              const ul = document.getElementById("checklist");
+              ul.innerHTML = ""; // Clear existing list
+              checklistItems.forEach(item =&gt; {
+                const li = document.createElement("li");
+                li.textContent = item;
+                ul.appendChild(li);
+              });
+            }</code></pre>
+            <h1 id="mcetoc_1ipdv0ulf96l">Emoticons</h1>
+            <p><img style="width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -.1em;" draggable="false" src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/15.1.0/72x72/1f951.png" alt="🥑" data-emoticon="true" /> <img style="width: 1em; height: 1em; margin: 0 .05em 0 .1em; vertical-align: -.1em;" draggable="false" src="https://cdnjs.cloudflare.com/ajax/libs/twemoji/15.1.0/72x72/1f60a.png" alt="😊" data-emoticon="true" /></p>
+            <h1 id="mcetoc_1ipdv0ulf96m">Image</h1>
+            <figure class="image"><img style="border-width: 5px; border-style: solid; margin: 10px;" title="image titile 123" src="https://google.com/logos/google.jpg" alt="this is image " width="354" height="116" />
+              <figcaption>Hello</figcaption>
+            </figure>
+            <p>&nbsp;</p>
+            <h1 id="mcetoc_1ipdvq0109q8">Lists &amp; List Styles</h1>
+            <h1 id="mcetoc_1ipdv0ulf96n"></h1>
+            <ol>
+              <li>aaa</li>
+              <li>bbb <ol>
+                  <li>ccc <ol>
+                      <li>ddd <ol>
+                          <li>eee</li>
+                        </ol>
+                      </li>
+                    </ol>
+                  </li>
+                </ol>
+              </li>
+            </ol>
+            <ul>
+              <li>111</li>
+              <li>222 <ul>
+                  <li>333 <ul>
+                      <li style="list-style-type: none;">
+                        <ul>
+                          <li>444</li>
+                          <li>555 <ul>
+                              <li>666</li>
+                            </ul>
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+            <ol style="list-style-type: lower-greek;">
+              <li>0000 <ol style="list-style-type: lower-greek;">
+                  <li>1111 <ol style="list-style-type: lower-greek;">
+                      <li>2222 <ol style="list-style-type: lower-greek;">
+                          <li>333</li>
+                        </ol>
+                      </li>
+                    </ol>
+                  </li>
+                </ol>
+              </li>
+            </ol>
+            <h1 id="mcetoc_1ipdv0ulf96o"></h1>
+            <h1 id="mcetoc_1ipdv0ulf96p">Link</h1>
+            <p><a title="abc net au" href="https://abc.net.au">https://abc.net.au</a></p>
+            <h1 id="mcetoc_1ipdv0ulf96p">Media</h1>
+            <p><iframe src="https://www.youtube.com/embed/Ff6nar7Hr78?feature=shared" width="560" height="314" allowfullscreen="allowfullscreen"></iframe></p>
+            <h1 id="mcetoc_1ipdv0ulf96q">Nonbreaking Space</h1>
+            <p><span class="mce-nbsp-wrap" contenteditable="false">&nbsp;</span><span class="mce-nbsp-wrap" contenteditable="false">&nbsp;</span><span class="mce-nbsp-wrap" contenteditable="false">&nbsp;</span></p>
+            <h1 id="mcetoc_1ipdv0ulf96r">Page Break</h1>
+            <p><!-- pagebreak --></p>
+            <h1 id="mcetoc_1ipdv0ulf96s">Table</h1>
+            <table style="width: 50%; height: 75%; background-color: #f8cac6; border-color: #e03e2d; border-style: double;" border="10" cellspacing="10" cellpadding="10">
+              <caption>Caption</caption>
+              <colgroup>
+                <col style="width: 25%;" />
+                <col style="width: 25%;" />
+                <col style="width: 25%;" />
+                <col style="width: 25%;" />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td>
+                    <table style="width: 50%; background-color: #bfedd2; border-color: #169179;" border="20" cellspacing="20" cellpadding="20">
+                      <caption>Caption</caption>
+                      <colgroup>
+                        <col style="width: 33.3333%;" />
+                        <col style="width: 33.3333%;" />
+                        <col style="width: 33.3333%;" />
+                      </colgroup>
+                      <tbody>
+                        <tr>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                        </tr>
+                        <tr>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                          <td>&nbsp;</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                  <td>&nbsp;</td>
+                </tr>
+              </tbody>
+            </table>
+            <h1 id="mcetoc_1ipdv0ulf96s"><a href="#ThisisAnchor">GoToAnchor</a></h1>
+            <h1 id="mcetoc_1ipdvq0109q9">Content<br /><br /></h1>
+            <p style="font-family: Arial, sans-serif; font-size: 16px; color: #2c3e50; background-color: #f0f8ff; line-height: 1.6; text-align: justify; text-indent: 30px; letter-spacing: 0.5px; word-spacing: 1px; padding: 10px; margin: 10px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 2px 2px 6px rgba(0,0,0,0.1);"><strong><u><em>HTML</em></u></strong> was originally developed by <span style="color: #e74c3c; font-weight: bold; font-style: italic; text-decoration: underline dotted;">Tim Berners-Lee</span> in <span style="font-size: 18px; color: #2980b9; background-color: #eaf2f8; padding: 2px 4px; border: 1px dashed #3498db;">1990</span>. He is also known as the <span style="font-weight: bold; font-variant: small-caps; color: #8e44ad; text-shadow: 1px 1px #ccc;">father of the web</span>.</p>
+            <p style="font-family: 'Courier New', monospace; font-size: 15px; background-color: #fcf3cf; padding: 8px; border-left: 4px solid #f39c12; margin-left: 20px;">In <span style="color: #16a085; font-style: italic;">1996</span>, the <span style="text-transform: uppercase; color: #d35400;">World Wide Web Consortium (W3C)</span> became the authority to maintain the HTML specifications.</p>
+            <p style="font-style: oblique; background: linear-gradient(to right, #f9f9f9, #e0f7fa); padding: 10px;"><mark style="background-color: #ffff00; color: #000;">HTML also became an international standard (ISO) in 2000.</mark></p>
+            <p style="font-weight: bold; font-size: 17px; background-color: #d1f2eb; border: 1px solid #1abc9c; padding: 8px;"><span style="color: #27ae60;">HTML5</span> is the <span style="text-decoration: line-through; color: #c0392b;">latest</span> <span style="text-decoration: underline overline; background-color: #fce4ec;">version</span> of HTML. <span style="font-family: monospace; color: #34495e; background-color: #ecf0f1;">HTML5 provides a faster and more robust approach to web development.</span></p>
+            
+            <p>This is a <strong>bold</strong> word.</p>
+            <p>This is an <em>italic</em> word.</p>
+            <p>This is an <u>underlined</u> word.</p>
+            <p>This is a <strike>strikethrough</strike> word.</p>
+            <p>This is a superscript example: E = mc<sup>2</sup></p>
+            <p>This is a subscript example: H<sub>2</sub>O</p>
+            <hr />
+            <hr />
+            <p>This is a&nbsp;<strong>bold</strong> word.</p>
+            <p>This is an <em>italic</em> word.</p>
+            <p>This is an <span style="text-decoration: underline;">underlined</span> word.</p>
+            <p>This is a&nbsp;<s>strikethrough</s> word.</p>
+            <p>This is a superscript example: E=mc<sup>2 </sup></p>
+            <p>This is a subscript example: H<sub>2</sub>O</p>
+            <hr />
+            
+            <h1 id="mcetoc_1ipdv0ulf96t">Footnotes</h1>
+            <p>&nbsp;</p>
+            <div class="mce-footnotes">
+              <hr />
+              <ol>
+                <li id="footnotes_entry_75157979611745299752311"><a class="mce-footnotes-backlink" href="#footnote_75157979611745299752311">^&nbsp;</a><span class="mce-footnotes-note">this is a math equation</span></li>
+              </ol>
+            </div>
+  </textarea>
+  <button type="button" class="showGetContent">Show getContent</button>
+  <button type="button" class="showMarkGetContent">Show Markdown getContent</button>
+  <button type="button" class="setContent">Set Content</button>
+  <button onclick="toggleEditorMode('readonly'); return false;">Make Read Only</button>
+  <button onclick="toggleEditorMode('design'); return false;">Make Editable</button>
+  <script>
+    document
+      .querySelector(".showGetContent")
+      .addEventListener("click", function () {
+        if (tinymce.activeEditor.ui) {
+          tinymce.activeEditor.windowManager.open({
+            size: "large",
+            title: "Get Content",
+            body: {
+              type: "panel",
+              items: [
+                {
+                  type: "textarea",
+                  flex: true,
+                  name: "getcontent",
+                  label: "Content",
+                },
+              ],
+            },
+            buttons: [],
+            initialData: {
+              getcontent: tinymce.activeEditor.getContent(),
+            },
+          });
+        } else {
+          tinymce.activeEditor.windowManager.alert(
+            tinymce.activeEditor.getContent()
+          );
+        }
+      });
+    document.querySelector('.showMarkGetContent').addEventListener('click', async function () {
+      const content = await tinymce.activeEditor.plugins.markdown.getContent();
+      if (tinymce.activeEditor.ui) {
+        tinymce.activeEditor.windowManager.open({
+          size: 'large',
+          title: 'Get Markdown Content',
+          body: {
+            type: 'panel',
+            items: [
+              {
+                type: 'textarea',
+                flex: true,
+                name: 'getmarkcontent',
+                label: 'Content'
+              }
+            ]
+          },
+          buttons: [],
+          initialData: {
+            getmarkcontent: content
+          }
+        });
+      } else {
+        tinymce.activeEditor.windowManager.alert(content);
+      }
+    });
+    document
+      .querySelector(".setContent")
+      .addEventListener("click", function () {
+        if (tinymce.activeEditor.ui) {
+          tinymce.activeEditor.windowManager.open({
+            size: "large",
+            title: "Set Content",
+            body: {
+              type: "panel",
+              items: [
+                {
+                  type: "textarea",
+                  flex: true,
+                  name: "setcontent",
+                  label: "Content",
+                },
+              ],
+            },
+            buttons: [
+              {
+                type: "custom",
+                name: "set",
+                text: "Set Content",
+              },
+            ],
+            initialData: {
+              getcontent: "",
+            },
+            onAction: function (api, data) {
+              if (data.name === "set") {
+                tinymce.activeEditor.setContent(api.getData().setcontent);
+                api.close();
+              }
+            },
+          });
+        }
+      });
+  </script>
+</body>
+
+</html>
