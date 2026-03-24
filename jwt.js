@@ -85,12 +85,9 @@ app.post('/jwt', (req, res) => {
         auth: {
             ai: {
                 permissions: [
-                    'ai:conversations:read',
-                    'ai:conversations:write',
-                    'ai:conversations:context:*',
-                    // 'ai:models:anthropic:*',
+                    'ai:conversations:*',
+                    'ai:conversations:context:*',                    
                     'ai:models:*',
-                    // 'ai:models:anthropic:claude-4-sonnet',
                     'ai:actions:system:*',
                     'ai:reviews:system:*'
                 ]
