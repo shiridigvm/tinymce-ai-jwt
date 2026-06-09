@@ -2,7 +2,8 @@
 <html>
 <head>
   <title>TinyMCE with TinyMCE AI</title>
-  <script src="https://cdn.staging.tiny.cloud/1/451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu/tinymce/8-dev/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
+  <!-- <script src="https://cdn.staging.tiny.cloud/1/451hc4rk1hb0l77jr4loyiutfx7k9fs0decaxvfma65mwulu/tinymce/8-dev/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script> -->
+  <script src="https://cdn.tiny.cloud/1/prsghhxax677rv082a1zj9b7cgjuoaqysf7h8ayxi5ao43ha/tinymce/8/tinymce.min.js" referrerpolicy="origin" crossorigin="anonymous"></script>
 
   <script>
     tinymce.init({
@@ -24,8 +25,9 @@
       // Sidebar: 'static' (default) or 'floating'.
       tinymceai_sidebar_type: 'static',
 
-      // 8-dev: point at TinyMCE AI API (staging: tinymceai.api.staging.tiny.cloud).
-      tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/'
+      // Production uses the default TinyMCE AI service; no service_url override needed.
+      // tinymceai_service_url: 'https://tinymceai.api.staging.tiny.cloud/',
+      // tinymceai_service_url: 'https://tinymceai.api.dev.tiny.cloud/'
     });
   </script>
 </head>
